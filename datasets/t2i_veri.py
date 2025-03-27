@@ -111,6 +111,6 @@ class T2I_VeRi(BaseImageDataset):
                 caption = self.image_text_train[osp.basename(img_path)]
             caption_container.add(caption)
             dataset.append((img_path, pid, caption))
-        print(caption_container, 'caption_container')
-        print(count, 'samples without caption annotations')
+        #print(caption_container, 'caption_container')
+        #print(count, 'samples without caption annotations')
         return dataset

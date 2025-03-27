@@ -39,8 +39,8 @@ class TextEncoder(nn.Module):
 
     def forward(self, prompts, tokenized_prompts): 
 
-        print("TextEncoder - prompts", prompts)
-        print("TextEncoder - tokenized_prompts", tokenized_prompts)
+        # print("TextEncoder - prompts", prompts)
+        # print("TextEncoder - tokenized_prompts", tokenized_prompts)
 
         x = prompts + self.positional_embedding.type(self.dtype) 
         x = x.permute(1, 0, 2)  # NLD -> LND 
@@ -55,7 +55,7 @@ class TextEncoder(nn.Module):
 
 class build_transformer(nn.Module):
     #def __init__(self, num_classes, camera_num, view_num, cfg):
-    def __init__(self, num_classes, caption_num cfg):
+    def __init__(self, num_classes, caption_num, cfg):
         super(build_transformer, self).__init__()
         self.model_name = cfg.MODEL.NAME
         self.cos_layer = cfg.MODEL.COS_LAYER
@@ -93,15 +93,15 @@ class build_transformer(nn.Module):
 
         self.image_encoder = clip_model.visual
 
-        if cfg.MODEL.SIE_CAMERA and cfg.MODEL.SIE_VIEW:
+        #if cfg.MODEL.SIE_CAMERA and cfg.MODEL.SIE_VIEW:
             #self.cv_embed = nn.Parameter(torch.zeros(camera_num * view_num, self.in_planes))
             #trunc_normal_(self.cv_embed, std=.02)
             #print('camera number is : {}'.format(camera_num))
-        elif cfg.MODEL.SIE_CAMERA:
+        #elif cfg.MODEL.SIE_CAMERA:
             #self.cv_embed = nn.Parameter(torch.zeros(camera_num, self.in_planes))
             #trunc_normal_(self.cv_embed, std=.02)
             #print('camera number is : {}'.format(camera_num))
-        elif cfg.MODEL.SIE_VIEW:
+        #elif cfg.MODEL.SIE_VIEW:
             #self.cv_embed = nn.Parameter(torch.zeros(view_num, self.in_planes))
             #trunc_normal_(self.cv_embed, std=.02)
             #print('camera number is : {}'.format(view_num))
@@ -111,10 +111,11 @@ class build_transformer(nn.Module):
         self.text_encoder = TextEncoder(clip_model)
 
     #def forward(self, x = None, label=None, get_image = False, get_text = False, cam_label= None, view_label=None):
-    def forward(self, x = None, label=None, get_image = False, get_text = False):
+    def forward(self, x = None, label=None, caption=None, get_image = False, get_text = False):
         if get_text == True:
-            print("label: ", label)
-            prompts = self.prompt_learner(label) 
+            print("get_text == True: ", label)
+            print("caption: ", caption)
+            prompts = self.prompt_learner(caption) 
             text_features = self.text_encoder(prompts, self.prompt_learner.tokenized_prompts)
             return text_features
 
@@ -200,53 +201,47 @@ def load_clip_to_cpu(backbone_name, h_resolution, w_resolution, vision_stride_si
 class PromptLearner(nn.Module):
     def __init__(self, num_class, dataset_name, dtype, token_embedding):
         super().__init__()
-        if dataset_name == "VehicleID" or dataset_name == "veri":
-            ctx_init = "A photo of a X X X X vehicle."
-        else:
-            ctx_init = "A photo of a X X X X person."
+        self.token_embedding = token_embedding
+        self.dtype = dtype
 
         ctx_dim = 512
-        # use given words to initialize context vectors
-        ctx_init = ctx_init.replace("_", " ")
-        n_ctx = 4
-        
-        tokenized_prompts = clip.tokenize(ctx_init).cuda() 
-        with torch.no_grad():
-            embedding = token_embedding(tokenized_prompts).type(dtype) 
-        self.tokenized_prompts = tokenized_prompts  # torch.Tensor
-
         n_cls_ctx = 4
         cls_vectors = torch.empty(num_class, n_cls_ctx, ctx_dim, dtype=dtype) 
         nn.init.normal_(cls_vectors, std=0.02)
         self.cls_ctx = nn.Parameter(cls_vectors) 
-
-        print("===PromptLearner=== num_class: ", num_class, token_embedding)
         
-        # These token vectors will be saved when in save_model(),
-        # but they should be ignored in load_model() as we want to use
-        # those computed using the current class names
-        self.register_buffer("token_prefix", embedding[:, :n_ctx + 1, :])  
-        self.register_buffer("token_suffix", embedding[:, n_ctx + 1 + n_cls_ctx: , :])  
+        print("===PromptLearner=== num_class: ", num_class)
+        
         self.num_class = num_class
         self.n_cls_ctx = n_cls_ctx
+        
+    def forward(self, input_prompt):
+        # Tokenize the incoming prompt dynamically
+        tokenized_prompts = clip.tokenize(input_prompt).cuda()
+        with torch.no_grad():
+            embedding = self.token_embedding(tokenized_prompts).type(self.dtype)
+        
+        # Slice the token embeddings dynamically based on input prompt structure
+        n_ctx = tokenized_prompts.size(1) - self.n_cls_ctx  # Assuming `n_cls_ctx` tokens are dynamic context
+        self.register_buffer("token_prefix", embedding[:, :n_ctx + 1, :])
+        self.register_buffer("token_suffix", embedding[:, n_ctx + 1 + self.n_cls_ctx:, :])
 
-    def forward(self, label):
-        cls_ctx = self.cls_ctx[label] 
-        b = label.shape[0]
-        prefix = self.token_prefix.expand(b, -1, -1) 
-        suffix = self.token_suffix.expand(b, -1, -1) 
-            
-        #print("===PromptLearner=== label: ", label)
-        #print("===PromptLearner=== prefix: ", prefix)
-        #print("===PromptLearner=== suffix: ", suffix)
+        # Dynamically set `cls_ctx` based on prompt structure
+        # Note: For simplicity, the `cls_ctx` parameter logic can remain the same,
+        # but you can modify it further if the dynamic prompt also influences the class context.
 
+        # cls_ctx = ...  # If needed, compute cls_ctx based on input_prompt
+        b = tokenized_prompts.shape[0]
+        prefix = self.token_prefix.expand(b, -1, -1)
+        suffix = self.token_suffix.expand(b, -1, -1)
+        
         prompts = torch.cat(
             [
-                prefix,  # (n_cls, 1, dim)
-                cls_ctx,     # (n_cls, n_ctx, dim)
-                suffix,  # (n_cls, *, dim)
+                prefix,   # (n_cls, 1, dim)
+                self.cls_ctx,  # (n_cls, n_ctx, dim)
+                suffix,   # (n_cls, *, dim)
             ],
             dim=1,
-        ) 
+        )
 
-        return prompts 
+        return prompts

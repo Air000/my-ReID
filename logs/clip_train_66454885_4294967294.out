@@ -1,0 +1,12 @@
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** STEP 66454885.0 ON gina16 CANCELLED AT 2025-03-26T22:47:03 ***
+slurmstepd: error: *** JOB 66454885 ON gina16 CANCELLED AT 2025-03-26T22:47:03 ***
+
++------------------ Job Report: 66454885 (CANCELLED) ------------------+
+| Memory (RAM)  [                    ]  0.1% (4.1 MB peak / 5 GB)      |
+| CPU           [###                 ] 16.7% average                   |
+| Time          [>                   ]  0.1% (0-00:00:24 / 0-12:00:00) |
+|                                                                      |
+| Lustre Filesystem:                                                   |
+|   No data available                                                  |
++----------------------------------------------------------------------+

@@ -1,0 +1,26 @@
+2025-03-26 22:45:29,852 INFO: Epoch[0] Iteration[20/578] Loss: 0.541, Acc: 0.002
+2025-03-26 22:45:46,612 INFO: Epoch[0] Iteration[40/578] Loss: 0.436, Acc: 0.001
+2025-03-26 22:46:02,090 INFO: Epoch[0] Iteration[60/578] Loss: 0.374, Acc: 0.001
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+slurmstepd: error: *** JOB 66454884 ON gina16 CANCELLED AT 2025-03-26T22:46:02 ***
+slurmstepd: error: *** STEP 66454884.0 ON gina16 CANCELLED AT 2025-03-26T22:46:02 ***
+
++------------------ Job Report: 66454884 (CANCELLED) ------------------+
+| Memory (RAM)  [############        ] 60.1% (3 GB peak / 5 GB)        |
+| CPU           [###                 ] 18.7% average                   |
+| GPU           [                    ]  0.0% average                   |
+| Time          [>                   ]  4.3% (0-00:02:35 / 0-01:00:00) |
+|                                                                      |
+| Lustre Filesystem:                                                   |
+|   Path    Total Read    Total Write    Total IOPS                    |
+|   ------  ------------  -------------  ------------                  |
+|   /apps   1.2 MB        0 B            95                            |
+|   /fred   355.6 MB      81 B           11.3 K                        |
+|   /home   579.4 MB      0 B            51                            |
+|   OS      960 KB        0 B            7                             |
+|                                                                      |
+| Warnings:                                                            |
+|   - CPU usage is low                                                 |
+|   - GPU usage is low                                                 |
+|   - Too much time requested                                          |
++----------------------------------------------------------------------+

@@ -71,6 +71,6 @@ TEST:
 DATASETS:
   NAMES: ('t2i_veri')
   ROOT_DIR: ('/fred/oz090/shihan/')
-OUTPUT_DIR: '/fred/oz090/shihan/CLIP-ReID/clip_output/20250220'
+OUTPUT_DIR: '/fred/oz090/shihan/my-ReID/clip_output/20250304'
 
 # CUDA_VISIBLE_DEVICES=0 python train_clipreid.py --config_file configs/veri/vit_clipreid.yml
