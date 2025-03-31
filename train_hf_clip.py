@@ -117,7 +117,7 @@ class CustomCLIPDataset(object):
         self.dataset_dir = osp.join(root, self.dataset_dir)
         self.train_dir = osp.join(self.dataset_dir, 'image_train')
         self.gallery_dir = osp.join(self.dataset_dir, 'image_test')
-        self.split_path = osp.join(self.dataset_dir, 'reid.json')
+        self.split_path = osp.join(self.dataset_dir, 'reid_loop_sensor.json')
 
         self._check_before_run()
 
@@ -308,5 +308,5 @@ for epoch in range(num_epochs):
 
     if epoch % 20 == 0:
         # Save fine-tuned model
-        model.save_pretrained("fine_tuned_clip_model_{}".format(epoch))
-        processor.save_pretrained("fine_tuned_clip_processor_{}".format(epoch))
+        model.save_pretrained("loop_sensor_clip_model_{}".format(epoch))
+        processor.save_pretrained("loop_sensor_clip_processor_{}".format(epoch))
